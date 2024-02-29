@@ -23,7 +23,15 @@ const int PATH = 6;
 int maze[MSZ][MSZ] = { 0 }; // space
 bool runBestFirstSearch = false;
 
-queue <Cell*> grays; // queue of gray cells
+
+struct CompareHeuristic {
+	bool operator()(const Cell* lhs, const Cell* rhs) const {
+		return lhs->getHeuristic(lhs) > rhs->getHeuristic(rhs);
+	}
+};
+
+priority_queue<Cell*, vector<Cell*>, CompareHeuristic> grays;
+Cell* target = nullptr;
 
 void InitMaze();
 
@@ -67,9 +75,11 @@ void InitMaze()
 			}
 		}
 	maze[MSZ / 2][MSZ / 2] = START;
-	maze[rand() % MSZ][rand() % MSZ] = TARGET;
+	int rand_num = rand() % MSZ;
+	maze[rand_num][rand_num] = TARGET;
 
 	Cell* pc = new Cell(MSZ / 2, MSZ / 2, nullptr);  // pointer to a cell
+	target = new Cell(rand_num, rand_num, nullptr);
 	grays.push(pc); // insert first cell to grays
 
 }
@@ -129,7 +139,7 @@ void RunBestFirstSearchIteration(Cell* target)
 {
 	if (!grays.empty())
 	{
-		Cell* current = grays.front();
+		Cell* current = grays.top();
 		grays.pop();
 
 		if (current->getRow() == target->getRow() && current->getCol() == target->getCol())
@@ -163,7 +173,7 @@ void RunBestFirstSearchIteration(Cell* target)
 						// Calculate the heuristic value for the successor
 						double heuristic = current->getHeuristic(target);
 
-						// Create a new cell and add it to the gray queue
+						// Create a new cell and add it to the priority queue
 						Cell* successor = new Cell(newRow, newCol, current);
 						grays.push(successor);
 
@@ -175,41 +185,6 @@ void RunBestFirstSearchIteration(Cell* target)
 		}
 	}
 }
-
-void RunBestFirstSearch()
-{
-	// Find the target cell
-	Cell* target = nullptr;
-	for (int i = 0; i < MSZ; ++i)
-	{
-		for (int j = 0; j < MSZ; ++j)
-		{
-			if (maze[i][j] == TARGET)
-			{
-				target = new Cell(i, j, nullptr);
-				break;
-			}
-		}
-		if (target != nullptr)
-			break;
-	}
-
-	// Check if the target cell is found
-	if (target == nullptr)
-	{
-		cout << "Target cell not found!" << endl;
-		return;
-	}
-
-	// Run the Best-First Search iterations until the target is reached
-	while (!grays.empty() && runBestFirstSearch)
-	{
-		RunBestFirstSearchIteration(target);
-	}
-
-	delete target; // Cleanup
-}
-
 
 
 // drawings are here
@@ -225,10 +200,11 @@ void display()
 void idle()
 {
 
-	if (runBestFirstSearch)
-		RunBestFirstSearch();
+	if (runBestFirstSearch) {
+		RunBestFirstSearchIteration(target);
+		glutPostRedisplay();
+	}
 
-	glutPostRedisplay(); // call to display indirectly
 }
 
 void menu(int choice)

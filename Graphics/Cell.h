@@ -16,7 +16,7 @@ public:
     Cell* getParent() { return parent; }
 
     // Euclidean distance heuristic
-    double getHeuristic(const Cell* target) {
+    double getHeuristic(const Cell* target) const {
         int dx = target->row - row;
         int dy = target->col - col;
         return sqrt(dx * dx + dy * dy);
